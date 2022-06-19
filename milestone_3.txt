@@ -1,0 +1,174 @@
+# include <stdio.h>
+# include <stdlib.h>
+# include <math.h>
+// Every allocated memorries are released!!! 
+char* encrypt(int n, int k, char* bitsq){
+    int count,i=0;
+    char *new2 = malloc((8*n+k)*sizeof(char));
+    new2[8*n+k-1] = '\0';
+    for(count=0;count<8*n+k-1;count++){
+        new2[count] = '0';
+        }
+    while(i<k){
+        for(count=0;count<8*n;count++){
+            if(new2[count+i] != bitsq[count]) new2[count+i] = '1';
+            else new2[count+i] = '0';
+            }
+        i++;
+        }
+    free(bitsq);
+    return new2;
+    }
+
+char* decrypt(int l, int k, char* encryptedBitsq){
+    int i;
+    char *new2 = malloc((l-k+2)*sizeof(char));
+    new2[l-k+1] = '\0';
+    new2[0] = encryptedBitsq[0], new2[l-k] = encryptedBitsq[l-1];
+    for(i=1 ; i<l-k+1 ; i++){
+        if(i < k){
+            if(encryptedBitsq[i] != encryptedBitsq[i-1]) new2[i] = '1';
+            else new2[i] = '0';
+            }
+        else{
+            if(encryptedBitsq[i] != encryptedBitsq[i-1]){
+                if(new2[i-k] == '1') new2[i] = '0';
+                else new2[i] = '1';
+                }
+            else new2[i] = new2[i-k];
+            }
+        }
+    free(encryptedBitsq);
+    return new2;
+    }
+
+char* encode(int n, char* msg){
+    int count,count2;    
+    char *new = malloc((8*n+1)*sizeof(char));
+    new[8*n] = '\0';
+    for(count=0; count<n; count++){    
+        int k = 8*(count+1)-1;
+        for(count2=7;count2>=0;count2--){
+            if((msg[count])&(1<<count2)){
+                new[k-count2] = '1';
+                }
+            else new[k-count2] = '0';
+            }
+        }
+    return new;
+    }
+
+char* decode(int n, char* bitsq){
+    int i,k,count,sum;
+    char *new = malloc(((n/8)+1)*sizeof(char));
+    new[n/8] = '\0';
+    count = 0;
+    for(i=0;i<n;i = i+8){
+        sum = 0;
+        for(k=7;k>=0;k=k-1){
+            if(bitsq[i+k]=='1'){
+                sum += (1<<(7-k));
+                }
+            }
+        new[count] = (char)sum;
+        count++;
+        }
+    free(bitsq);
+    return new;
+    }
+    
+char* parity(int l, char* bitsq){
+    int paritybits = 0, i, p = 0, count=0, j, k;
+    while ((1<<p)<(p+l+1)){
+        p++;
+        paritybits ++;
+        }
+    char* new3 = malloc((l+paritybits+1)*sizeof(char));
+    new3[l+paritybits-1] = '\0';
+    for(i=0;i<=paritybits;i++){
+        int x = (1<<i);
+        if(x-1 <= l+paritybits) new3[x-1] = 'x';        
+        }
+    for(i=0;i<=l+paritybits;i++){
+        if(new3[i]!='x'){ 
+            new3[i]=bitsq[count];
+            count++;
+            }
+        }
+    for(i=0;i<=paritybits;i++){
+        int a = 1<<i;
+        if(a-1 <= l+paritybits) new3[a-1] = '0';
+        for(j=a-1;j<l+paritybits;j=j+2*a){
+            for(k=0;k<a;k++){
+                if((j+k)<l+paritybits-1){
+                    if(new3[a-1]^new3[j+k]) new3[a-1] = '1';
+                    else new3[a-1] = '0';
+                    }
+                }
+            }
+        }
+    free(bitsq);
+    return new3;    
+    }
+ 
+char* imparity(int l, char* bitsq){
+    int i,j,k,count=0, er=0, paritybits;
+    paritybits = log2(l);
+    char* bits = malloc((paritybits+2)*sizeof(char));
+    bits[paritybits+1] = '\0';
+    for(i=0;i<=paritybits;i++){
+        int a = 1<<i;
+        bits[i] = '0';
+        for(j=a-1;j<l;j=j+2*a){
+            for(k=0;k<a;k++){
+                if((j+k)<l){
+                    if(bits[i]^bitsq[j+k]) bits[i] = '1';
+                    else bits[i] = '0';
+                    }
+                }
+            }
+            bitsq[a-1] = 'x';
+        }
+    for(i=0;i<=paritybits;i++){
+        if(bits[i] == '1') er += 1<<i;
+        }
+    free(bits);
+    if(er!=0){
+        if (bitsq[er-1]=='0') bitsq[er-1]='1';
+        else bitsq[er-1]='0';   
+        printf("Error detected and corrected!\n"); 
+    }
+    char* new3 = malloc((l-paritybits+2)*sizeof(char));
+    for(i=0;i<l;i++){
+        if(bitsq[i]!='x') {
+            new3[count] = bitsq[i];
+            count ++;
+            }
+        }
+    return new3;
+    }
+
+int main(){
+    char type;
+    int length,shift,N;
+    scanf("%c ", &type);  
+    if(type=='P'){    
+        scanf("%d %d", &length, &shift);
+        char message[1000];
+        scanf("\n");
+        scanf("%[^\n]%*c", message);
+        char* final = parity((8*length + shift), encrypt(length, shift, encode(length, message)));
+        printf("%s", final);
+        free(final);
+        }
+    else if(type=='C'){
+        scanf("%d %d %d", &N, &length, &shift);
+        char message[10000]; 
+        scanf("\n");
+        scanf("%[^\n]%*c", message);
+         char* final = decode(8*N, decrypt(length, shift, imparity(length, message)));
+        printf("%s", final);
+        free(final);
+        }
+    else return 0;
+    }

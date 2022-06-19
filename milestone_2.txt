@@ -1,0 +1,58 @@
+# include <stdio.h>
+# include <stdlib.h>
+
+char* encode(int n, char* msg){
+	int count,count2;	
+	char *new = malloc(8*n+1);
+	new[8*n] = '\0';
+	for(count=0; count<n; count++){	
+		int k = 8*(count+1)-1;
+		for(count2=7;count2>=0;count2--){
+			if((msg[count])&(1<<count2)){
+				new[k-count2] = '1';
+				}
+			else new[k-count2] = '0';
+			}
+		}
+	return new;
+	}
+
+	
+char* decode(int n, char* bitsq){
+    int i,k,count,sum;
+    char *new = malloc((n/8)+1);
+    new[n/8] = '\0';
+    count = 0;
+    for(i=0;i<n;i = i+8){
+        sum = 0;
+        for(k=7;k>=0;k=k-1){
+            if(bitsq[i+k]=='1'){
+                sum += (1<<(7-k));
+                }
+            }
+        new[count] = (char)sum;
+        count++;
+        }
+        return new;
+    }
+	
+
+int main(){
+    char type;
+    int length;
+    scanf("%c ", &type);
+    scanf("%d ", &length);
+    if(type=='P'){
+        char message[1000];
+        scanf("\n");
+        scanf("%[^\n]%*c", message);
+        printf("%s", encode(length, message));
+        }
+    else if(type=='C'){
+        char message[10000]; 
+        scanf("\n");
+        scanf("%[^\n]%*c", message);
+        printf("%s", decode(length, message));
+        }
+    else return 0;
+    }
